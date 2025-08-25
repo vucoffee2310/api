@@ -1,0 +1,27 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "builds": [
+    {
+      "src": "api/index.sh",
+      "use": "vercel-bash@4.2.0"
+    }
+  ],
+  "env": {
+    "DEEPGRAM_API_KEY": "@deepgram_api_key",
+    "SECRET": "@my_secret"
+  },
+  "regions": ["hkg1"],
+  "functions": {
+    "api/index.sh": {
+      "memory": 1536,
+      "maxDuration": 200
+    }
+  },
+  "buildCommand": "bash build.sh",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index.sh"
+    }
+  ]
+}
