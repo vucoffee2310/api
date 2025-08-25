@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# ================================================
-# FILE: api/index.sh (NEW)
-# ================================================
-
-# Hàm handler() là điểm vào chính được thực thi bởi Vercel Runtime
 handler() {
   # Vercel truyền dữ liệu request vào một file tạm và cung cấp đường dẫn qua $1
   local request_body_file="$1"
