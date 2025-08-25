@@ -3,6 +3,8 @@
 # Exit immediately if a command exits with a non-zero status.
 set -e
 
+echo "API Endpoint is running." > public/index.html
+
 echo "--- Creating directories ---"
 # The serverless function will be built inside the `api` directory
 mkdir -p api/bin
@@ -17,4 +19,4 @@ chmod +x api/bin/yt-dlp
 
 echo "--- Build complete ---"
 
-mkdir -p api/public
+# FILE: build.sh
