@@ -6,15 +6,14 @@
 set -eo pipefail
 
 # ==============================================================================
-# BUILD FUNCTION
-# This function is executed by the vercel-bash builder AT BUILD TIME.
+# BUILD FUNCTION (Executed at Build Time)
+# This function is executed by the vercel-bash builder when you deploy.
 # Any files it creates in the current directory will be bundled with the function.
 # ==============================================================================
 build() {
   echo "Build function started..."
   
   # Create a 'bin' directory relative to this script.
-  # This will become 'api/bin' in the project structure.
   mkdir -p ./bin
 
   # Download the latest yt-dlp binary into the './bin' directory.
@@ -30,38 +29,35 @@ build() {
 
 
 # ==============================================================================
-# HANDLER FUNCTION
-# This function is executed AT RUNTIME when the API endpoint is requested.
+# HANDLER FUNCTION (Executed at Runtime)
+# This function is executed when the API endpoint is requested.
+# Vercel provides request metadata in the file at $1 and the body in the file at $2.
 # ==============================================================================
 handler() {
-  # --- DEBUGGING: Print the raw request body to the Vercel logs --- ### DEBUG ###
-  echo "--- RAW BODY RECEIVED ---" >&2                                 ### DEBUG ###
-  cat "$2" >&2                                                         ### DEBUG ###
-  echo "--- END RAW BODY ---" >&2                                       ### DEBUG ###
-
-  # --- 1. Check Request Method ---
+  # --- 1. Validate Request Method ---
   local method
   method=$(jq -r '.method' < "$1")
 
   if [ "$method" != "POST" ]; then
-    http_response_code 405
+    http_response_code 405 # Method Not Allowed
     http_response_json
     echo '{ "error": "This endpoint only accepts POST requests." }'
     return 0
   fi
 
-  # --- 2. Check for API Key Environment Variable ---
+  # --- 2. Validate Server Configuration ---
   if [ -z "$DEEPGRAM_API_KEY" ]; then
-    http_response_code 500
+    http_response_code 500 # Internal Server Error
     http_response_json
     echo '{ "error": "DEEPGRAM_API_KEY environment variable not set on the server." }'
     return 0
   fi
 
-  # --- 3. Parse and Validate JSON Body ---
+  # --- 3. Parse and Validate JSON Request Body ---
   local body
   body=$(cat "$2")
 
+  # Extract values using jq. The `// ""` provides a default empty string if a key is missing.
   local video_url
   local cookies_content
   local extractor_args
@@ -69,26 +65,37 @@ handler() {
   cookies_content=$(echo "$body" | jq -r '.cookies // ""')
   extractor_args=$(echo "$body" | jq -r '.extractor_args // ""')
 
+  # Check if any of the required fields are empty.
   if [ -z "$video_url" ] || [ -z "$cookies_content" ] || [ -z "$extractor_args" ]; then
-    http_response_code 400
+    http_response_code 400 # Bad Request
     http_response_json
     echo '{ "error": "Missing required fields. '\''video_url'\'', '\''cookies'\'', and '\''extractor_args'\'' are all required." }'
     return 0
   fi
 
-  # --- 4. Create a temporary file for cookies ---
+  # --- 4. Securely Handle Cookies in a Temporary File ---
+  # mktemp creates a secure temporary file and returns its path.
   local cookie_file
   cookie_file=$(mktemp)
+
+  # 'trap' sets up a command that will run when the script exits for any reason
+  # (success, failure, or interrupt). This ensures our temp file is always deleted.
   trap 'rm -f "$cookie_file"' EXIT
+
+  # Write the cookie content from the JSON payload into the temporary file.
   echo "$cookies_content" > "$cookie_file"
 
-  # --- 5. Execute the streaming pipeline ---
+  # --- 5. Execute the Streaming Pipeline ---
+  # The standard output of yt-dlp is directly piped as the standard input to curl.
+  # The standard error from yt-dlp (which includes progress) goes to the Vercel function logs.
+
+  # Tell the client we are returning a JSON response.
   http_response_json
-  
-  # The path to the executable we downloaded during the build step.
-  # It is now located in a 'bin' directory alongside this script.
+
+  # Define the path to the executable we downloaded during the build step.
   local yt_dlp_executable="./bin/yt-dlp"
 
+  # The pipeline: Download audio from YouTube and immediately upload to Deepgram.
   "$yt_dlp_executable" \
     --progress \
     --no-warnings \
@@ -106,4 +113,8 @@ handler() {
     -H "accept: application/json" \
     --data-binary @- \
     "https://manage.deepgram.com/storage/assets"
+
+  # The output of the final curl command (the response from Deepgram) becomes the
+  # final output of this function. Because of 'set -eo pipefail', if either
+  # yt-dlp or curl fails, the script will stop and Vercel will report an error.
 }
