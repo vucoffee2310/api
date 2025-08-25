@@ -3,7 +3,11 @@
   "builds": [
     {
       "src": "api/index.sh",
-      "use": "vercel-bash@4.2.0"
+      "use": "vercel-bash@4.2.0",
+      "config": {
+        "memory": 1536,
+        "maxDuration": 200
+      }
     }
   ],
   "env": {
@@ -11,12 +15,6 @@
     "SECRET": "@my_secret"
   },
   "regions": ["hkg1"],
-  "functions": {
-    "api/index.sh": {
-      "memory": 1536,
-      "maxDuration": 200
-    }
-  },
   "buildCommand": "bash build.sh",
   "rewrites": [
     {
