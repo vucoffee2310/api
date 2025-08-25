@@ -34,6 +34,11 @@ build() {
 # This function is executed AT RUNTIME when the API endpoint is requested.
 # ==============================================================================
 handler() {
+  # --- DEBUGGING: Print the raw request body to the Vercel logs --- ### DEBUG ###
+  echo "--- RAW BODY RECEIVED ---" >&2                                 ### DEBUG ###
+  cat "$2" >&2                                                         ### DEBUG ###
+  echo "--- END RAW BODY ---" >&2                                       ### DEBUG ###
+
   # --- 1. Check Request Method ---
   local method
   method=$(jq -r '.method' < "$1")
