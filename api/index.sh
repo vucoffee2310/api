@@ -1,55 +1,37 @@
 #!/bin/bash
 
+# This makes the script exit immediately if a command fails (`-e`),
+# and ensures that a pipeline's exit code is the status of the last
+# command to exit with a non-zero status (`-o pipefail`).
 set -eo pipefail
 
 # ==============================================================================
 # BUILD FUNCTION
-# Executed by the vercel-bash builder AT BUILD TIME.
+# This function is executed by the vercel-bash builder AT BUILD TIME.
+# Any files it creates in the current directory will be bundled with the function.
 # ==============================================================================
 build() {
   echo "Build function started..."
   
-  # --- 1. Determine the correct location to save the file ---
-  # '$0' is the path to this script (e.g., /vercel/path/api/index.sh).
-  # 'dirname "$0"' gets the directory part (e.g., /vercel/path/api).
-  # This is the location we MUST save our files to so they get bundled.
-  local SCRIPT_DIR
-  SCRIPT_DIR=$(dirname "$0")
+  # Create a 'bin' directory relative to this script.
+  # This will become 'api/bin' in the project structure.
+  mkdir -p ./bin
 
-  echo "Current Working Directory (pwd): $(pwd)"
-  echo "Script's Source Directory (where files must be saved): $SCRIPT_DIR"
+  # Download the latest yt-dlp binary into the './bin' directory.
+  echo "Downloading yt-dlp..."
+  curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./bin/yt-dlp
 
-  # --- 2. Download the file to the SCRIPT's directory ---
-  local OUTPUT_PATH="$SCRIPT_DIR/yt-dlp"
-  echo "Downloading yt-dlp to: $OUTPUT_PATH"
-  curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o "$OUTPUT_PATH"
+  # Make the binary executable for all users.
+  chmod a+rx ./bin/yt-dlp
 
-  # --- 3. Make it executable in its final location ---
-  chmod a+rx "$OUTPUT_PATH"
-  echo "Made $OUTPUT_PATH executable."
-
-  # --- 4. Provide DETAILED INFORMATION for verification ---
-  echo ""
-  echo "--- Verifying Files in Source Directory ---"
-  
-  # List the contents of the SCRIPT's directory to confirm the file is there.
-  echo "Listing contents of '$SCRIPT_DIR':"
-  ls -la "$SCRIPT_DIR"
-  
-  # Use the 'file' command to inspect the downloaded binary.
-  echo "Checking file type of the downloaded binary:"
-  file "$OUTPUT_PATH"
-  
-  echo "--- End of Verification ---"
-  echo ""
-
+  echo "yt-dlp downloaded and made executable."
   echo "Build function finished successfully."
 }
 
 
 # ==============================================================================
 # HANDLER FUNCTION
-# Executed AT RUNTIME. No changes needed here.
+# This function is executed AT RUNTIME when the API endpoint is requested.
 # ==============================================================================
 handler() {
   # --- 1. Check Request Method ---
@@ -75,7 +57,9 @@ handler() {
   local body
   body=$(cat "$2")
 
-  local video_url cookies_content extractor_args
+  local video_url
+  local cookies_content
+  local extractor_args
   video_url=$(echo "$body" | jq -r '.video_url // ""')
   cookies_content=$(echo "$body" | jq -r '.cookies // ""')
   extractor_args=$(echo "$body" | jq -r '.extractor_args // ""')
@@ -96,9 +80,9 @@ handler() {
   # --- 5. Execute the streaming pipeline ---
   http_response_json
   
-  # At runtime, './yt-dlp' is correct because all bundled files are
-  # in the same directory (/var/task/).
-  local yt_dlp_executable="./yt-dlp"
+  # The path to the executable we downloaded during the build step.
+  # It is now located in a 'bin' directory alongside this script.
+  local yt_dlp_executable="./bin/yt-dlp"
 
   "$yt_dlp_executable" \
     --progress \
