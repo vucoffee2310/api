@@ -13,7 +13,6 @@
     }
   },
   "buildCommand": "bash build.sh",
-  "outputDirectory": "api/public", 
   "rewrites": [
     {
       "source": "/(.*)",
