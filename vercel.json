@@ -5,13 +5,16 @@
     "UPLOAD_URL": "https://manage.deepgram.com/storage/assets"
   },
   "regions": ["hkg1"],
-  "functions": {
-    "api/index.sh": {
-      "runtime": "vercel-bash@4.2.0",
-      "memory": 1536,
-      "maxDuration": 300
+  "builds": [
+    {
+      "src": "api/index.sh",
+      "use": "vercel-bash@4.2.0",
+      "config": {
+        "memory": 1536,
+        "maxDuration": 300
+      }
     }
-  },
+  ],
   "buildCommand": "bash build.sh",
   "rewrites": [
     {
