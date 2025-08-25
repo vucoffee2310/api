@@ -1,22 +1,17 @@
-#!/bin/bash
+# FILE: build.sh
 
-# Exit immediately if a command exits with a non-zero status.
-set -e
+# Tạo các thư mục cần thiết
+mkdir -p public api/bin
 
+# TẠO MỘT FILE GIẢ ĐỂ VERCEL KHÔNG CẢNH BÁO
+# Cách 1: Tạo một file index.html đơn giản
 echo "API Endpoint is running." > public/index.html
 
-echo "--- Creating directories ---"
-# The serverless function will be built inside the `api` directory
-mkdir -p api/bin
+# Cách 2 (phổ biến hơn): Tạo một file rỗng để giữ thư mục
+# touch public/.gitkeep
 
-echo "--- Downloading yt-dlp ---"
-# Download the latest yt-dlp binary into the function's bin folder
-curl -L "https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp" -o api/bin/yt-dlp
+# Tải phiên bản yt-dlp mới nhất vào thư mục api/bin
+curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o api/bin/yt-dlp
 
-echo "--- Making yt-dlp executable ---"
-# Grant execute permissions
+# Cấp quyền thực thi cho file vừa tải
 chmod +x api/bin/yt-dlp
-
-echo "--- Build complete ---"
-
-# FILE: build.sh
