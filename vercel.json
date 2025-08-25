@@ -12,7 +12,7 @@
       "maxDuration": 300
     }
   },
-  "outputDirectory": ".",
+  "outputDirectory": "public",
   "buildCommand": "bash build.sh",
   "rewrites": [
     {
