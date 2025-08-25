@@ -3,10 +3,6 @@
 # Tạo các thư mục cần thiết
 mkdir -p public api/bin
 
-# TẠO MỘT FILE GIẢ ĐỂ VERCEL KHÔNG CẢNH BÁO
-# Cách 1: Tạo một file index.html đơn giản
-echo "API Endpoint is running." > public/index.html
-
 # Cách 2 (phổ biến hơn): Tạo một file rỗng để giữ thư mục
 # touch public/.gitkeep
 
