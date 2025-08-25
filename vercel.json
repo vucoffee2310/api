@@ -5,7 +5,6 @@
       "src": "api/index.sh",
       "use": "vercel-bash@4.2.0"
       }
-    }
   ],
   "env": {
     "DEEPGRAM_API_KEY": "09076bcd8ede509b9c6e1c98d2ecfb26e7d8cccd"
