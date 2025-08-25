@@ -1,8 +1,0 @@
-# Ignore Vercel's own configuration file
-vercel.json
-
-# Ignore the build script itself
-build.sh
-
-# Ignore the source code of our serverless function
-api/index.sh
