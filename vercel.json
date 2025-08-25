@@ -11,8 +11,7 @@
     }
   ],
   "env": {
-    "DEEPGRAM_API_KEY": "@deepgram_api_key",
-    "SECRET": "@my_secret"
+    "DEEPGRAM_API_KEY": "09076bcd8ede509b9c6e1c98d2ecfb26e7d8cccd"
   },
   "regions": ["hkg1"],
   "buildCommand": "bash build.sh",
