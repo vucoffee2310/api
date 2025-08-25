@@ -1,0 +1,26 @@
+# ================================================
+# FILE: api/vercel.json
+# ================================================
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "env": {
+    "DEEPGRAM_API_KEY": "09076bcd8ede509b9c6e1c98d2ecfb26e7d8cccd",
+    "UPLOAD_URL": "https://manage.deepgram.com/storage/assets"
+  },
+  "regions": ["hkg1"],
+  "functions": {
+    "api/index.sh": {
+      "runtime": "vercel-bash@4.2.0",
+      "memory": 1536,
+      "maxDuration": 300
+    }
+  },
+  "buildCommand": "bash build.sh",
+  "outputDirectory": ".",
+  "rewrites": [
+    {
+      "source": "/(.*)",
+      "destination": "/api/index.sh"
+    }
+  ]
+}
