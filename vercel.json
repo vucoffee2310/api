@@ -1,3 +1,5 @@
+// FILE: vercel.json (ĐÃ SỬA LỖI)
+
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "env": {
@@ -13,7 +15,7 @@
     }
   },
   "buildCommand": "bash build.sh",
-  "outputDirectory": ".",
+  "outputDirectory": "public", 
   "rewrites": [
     {
       "source": "/(.*)",
