@@ -1,0 +1,9 @@
+# Ignore the build script itself, it's not needed after build
+build.sh
+
+# Ignore the Vercel configuration file from the public output
+vercel.json
+
+# Ignore Git directory and other common files
+.git
+.gitignore
