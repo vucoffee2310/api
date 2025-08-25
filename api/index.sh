@@ -8,23 +8,25 @@ set -eo pipefail
 # ==============================================================================
 # BUILD FUNCTION
 # This function is executed by the vercel-bash builder AT BUILD TIME.
-# Any files it creates in the current directory will be bundled with the function.
 # ==============================================================================
 build() {
   echo "Build function started..."
   
-  # Create a 'bin' directory relative to this script.
-  # This will become 'api/bin' in the project structure.
-  mkdir -p ./bin
-
-  # Download the latest yt-dlp binary into the './bin' directory.
+  # Download the yt-dlp binary directly into the function's root directory.
+  # This ensures it gets bundled with the handler.
   echo "Downloading yt-dlp..."
-  curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./bin/yt-dlp
+  curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./yt-dlp
 
   # Make the binary executable for all users.
-  chmod a+rx ./bin/yt-dlp
+  chmod a+rx ./yt-dlp
 
-  echo "yt-dlp downloaded and made executable."
+  # --- DEBUGGING STEP ---
+  # List the files in the current directory to confirm yt-dlp exists.
+  # This output will appear in your Vercel build log.
+  echo "--- Listing files after download ---"
+  ls -la
+  echo "--- End of file listing ---"
+
   echo "Build function finished successfully."
 }
 
@@ -80,9 +82,9 @@ handler() {
   # --- 5. Execute the streaming pipeline ---
   http_response_json
   
-  # The path to the executable we downloaded during the build step.
-  # It is now located in a 'bin' directory alongside this script.
-  local yt_dlp_executable="./bin/yt-dlp"
+  # The path to the executable is now in the current directory.
+  # At runtime, the current directory is /var/task/, where all bundled files live.
+  local yt_dlp_executable="./yt-dlp"
 
   "$yt_dlp_executable" \
     --progress \
