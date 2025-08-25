@@ -1,20 +1,20 @@
 #!/bin/bash
 
-# Dừng ngay lập tức nếu có lỗi
-set -e
+# Hàm helper để trả về JSON
+http_response_json() {
+  http_response_header "Content-Type" "application/json; charset=utf-8"
+  echo "$1"
+}
 
-echo "----> Installing dependencies..."
-# Môi trường Vercel build là Amazon Linux 2, dùng yum
-yum install -y jq
+# Hàm helper để trả về lỗi JSON
+json_error() {
+  http_response_code "${2:-400}"
+  http_response_json "{\"error\": \"$1\"}"
+  exit 0
+}
 
-echo "----> Downloading yt-dlp..."
-# Tạo thư mục bin để chứa các file thực thi
-mkdir -p api/bin
+if [[ "$REQUEST_METHOD" == "POST" ]]; then
+  json_error "This is the root endpoint. Please POST to /api/upload-youtube-audio" 405
+fi
 
-# Tải phiên bản yt-dlp mới nhất
-curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o api/bin/yt-dlp
-
-# Cấp quyền thực thi cho file
-chmod +x api/bin/yt-dlp
-
-echo "Build complete."
+http_response_json '{"message": "API is running. Send a POST request to /api/upload-youtube-audio"}'
