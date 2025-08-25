@@ -6,7 +6,7 @@ set -e
 echo "--- Creating directories ---"
 # The serverless function will be built inside the `api` directory
 mkdir -p api/bin
-mkdir -p public
+mkdir -p api/public
 
 echo "--- Downloading yt-dlp ---"
 # Download the latest yt-dlp binary into the function's bin folder
