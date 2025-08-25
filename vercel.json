@@ -13,6 +13,7 @@
     }
   },
   "buildCommand": "bash build.sh",
+  "outputDirectory": ".",
   "rewrites": [
     {
       "source": "/(.*)",
