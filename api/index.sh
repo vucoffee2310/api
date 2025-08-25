@@ -7,22 +7,13 @@ set -eo pipefail
 
 # ==============================================================================
 # BUILD FUNCTION (Executed at Build Time)
-# This function is executed by the vercel-bash builder when you deploy.
-# Any files it creates in the current directory will be bundled with the function.
 # ==============================================================================
 build() {
   echo "Build function started..."
-  
-  # Create a 'bin' directory relative to this script.
   mkdir -p ./bin
-
-  # Download the latest yt-dlp binary into the './bin' directory.
   echo "Downloading yt-dlp..."
   curl -L https://github.com/yt-dlp/yt-dlp/releases/latest/download/yt-dlp -o ./bin/yt-dlp
-
-  # Make the binary executable for all users.
   chmod a+rx ./bin/yt-dlp
-
   echo "yt-dlp downloaded and made executable."
   echo "Build function finished successfully."
 }
@@ -30,8 +21,6 @@ build() {
 
 # ==============================================================================
 # HANDLER FUNCTION (Executed at Runtime)
-# This function is executed when the API endpoint is requested.
-# Vercel provides request metadata in the file at $1 and the body in the file at $2.
 # ==============================================================================
 handler() {
   # --- 1. Validate Request Method ---
@@ -54,8 +43,15 @@ handler() {
   fi
 
   # --- 3. Parse and Validate JSON Request Body ---
-  local body
-  body=$(cat "$2")
+  local body="" # Default to an empty string
+
+  # --- FIX STARTS HERE ---
+  # Check if the second argument (the path to the body file) was provided AND if it is a valid file.
+  # This robustly handles requests that do not have a body.
+  if [ -n "$2" ] && [ -f "$2" ]; then
+    body=$(cat "$2")
+  fi
+  # --- FIX ENDS HERE ---
 
   # Extract values using jq. The `// ""` provides a default empty string if a key is missing.
   local video_url
@@ -66,6 +62,7 @@ handler() {
   extractor_args=$(echo "$body" | jq -r '.extractor_args // ""')
 
   # Check if any of the required fields are empty.
+  # This check will now correctly fail for requests with no body, as `video_url` will be empty.
   if [ -z "$video_url" ] || [ -z "$cookies_content" ] || [ -z "$extractor_args" ]; then
     http_response_code 400 # Bad Request
     http_response_json
@@ -74,28 +71,15 @@ handler() {
   fi
 
   # --- 4. Securely Handle Cookies in a Temporary File ---
-  # mktemp creates a secure temporary file and returns its path.
   local cookie_file
   cookie_file=$(mktemp)
-
-  # 'trap' sets up a command that will run when the script exits for any reason
-  # (success, failure, or interrupt). This ensures our temp file is always deleted.
   trap 'rm -f "$cookie_file"' EXIT
-
-  # Write the cookie content from the JSON payload into the temporary file.
   echo "$cookies_content" > "$cookie_file"
 
   # --- 5. Execute the Streaming Pipeline ---
-  # The standard output of yt-dlp is directly piped as the standard input to curl.
-  # The standard error from yt-dlp (which includes progress) goes to the Vercel function logs.
-
-  # Tell the client we are returning a JSON response.
   http_response_json
-
-  # Define the path to the executable we downloaded during the build step.
   local yt_dlp_executable="./bin/yt-dlp"
 
-  # The pipeline: Download audio from YouTube and immediately upload to Deepgram.
   "$yt_dlp_executable" \
     --progress \
     --no-warnings \
@@ -113,8 +97,4 @@ handler() {
     -H "accept: application/json" \
     --data-binary @- \
     "https://manage.deepgram.com/storage/assets"
-
-  # The output of the final curl command (the response from Deepgram) becomes the
-  # final output of this function. Because of 'set -eo pipefail', if either
-  # yt-dlp or curl fails, the script will stop and Vercel will report an error.
 }
